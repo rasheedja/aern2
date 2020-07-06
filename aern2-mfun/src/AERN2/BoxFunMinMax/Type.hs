@@ -76,7 +76,17 @@ checkECNF cnf vMapInit p =
                     r
                   r -> r
               else
-                trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
+                let
+                  centreVarMap = AERN2.BoxFunMinMax.VarMap.centre vMap
+                  applyCentre f = applyLipschitz f (setPrecision p (domain f))
+                  centreEs = map (\e -> applyCentre (expressionToBoxFun e centreVarMap p)) (map snd es')
+                  highestMin = maximum centreEs
+                in
+                  if highestMin !<! 0.0 then
+                    trace "Stopping bisections (Box too small)" (Just False, Just (toSearchBox centreVarMap highestMin))
+                  else
+                    -- trace "Stopping bisections (Box too small)" (Nothing, Just (toSearchBox vMap highestMin)) 
+                    trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
         where
           esWithRanges = zip es (parMap rseq applyE es)
 
